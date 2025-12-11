@@ -1,4 +1,4 @@
-import { ArrowLeft, Clock, Calendar, Users, BookOpen, CheckCircle2, Send, ClipboardCheck, FileUp, UserCheck, Video, AlertCircle, Upload, X, Bell, Pin, Star, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, Users, BookOpen, CheckCircle2, Send, ClipboardCheck, UserCheck, Video, AlertCircle, Bell, Pin, Upload, MessageCircle, FileUp, Star, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -222,12 +222,57 @@ const mockFinalGrade = {
   isFinalized: false, // Chưa có điểm tổng kết chính thức
 };
 
-// Mock data - Chat messages
+// Helper function to format chat timestamp
+const formatChatTime = (date: Date): string => {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 60) {
+    return `${diffMins} phút trước`;
+  } else if (diffHours < 24) {
+    return `${diffHours} giờ trước`;
+  } else if (diffDays < 7) {
+    return `${diffDays} ngày trước`;
+  } else {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes} - ${day}/${month}/${year}`;
+  }
+};
+
+// Mock data - Chat messages (Realistic conversation history)
 const mockMessages = [
-  { id: '1', sender: 'tutor', name: 'Giảng viên', message: 'Chào các bạn! Có thắc mắc gì về bài học hôm nay không?', time: '10:30' },
-  { id: '2', sender: 'student', name: 'Bạn', message: 'Thưa thầy, em chưa hiểu rõ về vòng lặp for ạ', time: '10:35' },
-  { id: '3', sender: 'tutor', name: 'Giảng viên', message: 'Em có thể xem lại video bài giảng phần vòng lặp. Nếu vẫn chưa hiểu thì thầy sẽ giải thích thêm nhé.', time: '10:37' },
+  { id: '1', sender: 'tutor', name: 'Thầy Nguyễn Văn A', message: 'Chào các bạn! Chúc các bạn một ngày học tập hiệu quả. Hôm nay chúng ta sẽ bắt đầu chương mới về Con trỏ trong C.', time: formatChatTime(new Date('2025-11-20T08:00:00')) },
+  { id: '2', sender: 'tutor', name: 'Thầy Nguyễn Văn A', message: 'Các bạn nhớ xem video bài giảng và đọc tài liệu trước khi đến lớp nhé. Nếu có thắc mắc gì, inbox cho thầy ở đây.', time: formatChatTime(new Date('2025-11-20T08:02:00')) },
+  
+  { id: '3', sender: 'student', name: 'Bạn', message: 'Thưa thầy, em có thắc mắc về bài kiểm tra trắc nghiệm 2 ạ. Em làm được 7.5 điểm nhưng không biết câu nào sai ạ.', time: formatChatTime(new Date('2025-11-20T09:15:00')) },
+  { id: '4', sender: 'tutor', name: 'Thầy Nguyễn Văn A', message: 'Chào em! Em vào phần "Điểm Số" rồi click vào bài kiểm tra đó, sẽ có phần xem đáp án chi tiết và giải thích nhé.', time: formatChatTime(new Date('2025-11-20T09:20:00')) },
+  { id: '5', sender: 'student', name: 'Bạn', message: 'Dạ em cảm ơn thầy ạ!', time: formatChatTime(new Date('2025-11-20T09:22:00')) },
+  
+  { id: '6', sender: 'student', name: 'Bạn', message: 'Thầy ơi, em xin phép hỏi về bài tập vòng lặp ạ. Em chưa hiểu rõ sự khác nhau giữa vòng for và while ạ.', time: formatChatTime(new Date('2025-11-20T14:30:00')) },
+  { id: '7', sender: 'tutor', name: 'Thầy Nguyễn Văn A', message: 'Vòng lặp for thường dùng khi em biết trước số lần lặp, ví dụ: for(i=0; i<10; i++). Còn while dùng khi điều kiện dừng phụ thuộc vào logic, ví dụ: while(n>0).', time: formatChatTime(new Date('2025-11-20T14:45:00')) },
+  { id: '8', sender: 'tutor', name: 'Thầy Nguyễn Văn A', message: 'Em có thể xem lại video "Vòng lặp for và while" ở Chương 3. Thầy có giải thích rất kỹ ở phút thứ 12 đó em.', time: formatChatTime(new Date('2025-11-20T14:46:00')) },
+  { id: '9', sender: 'student', name: 'Bạn', message: 'Dạ em hiểu rồi ạ! Em cảm ơn thầy nhiều ạ.', time: formatChatTime(new Date('2025-11-20T15:00:00')) },
+  
+  { id: '10', sender: 'student', name: 'Bạn', message: 'Thầy cho em hỏi, deadline bài kiểm tra 3 là ngày 08/11 nhưng hôm nay là 23/11 rồi, em có thể làm bù được không ạ?', time: formatChatTime(new Date('2025-11-21T16:20:00')) },
+  { id: '11', sender: 'tutor', name: 'Thầy Nguyễn Văn A', message: 'Bài kiểm tra 3 đã quá hạn rồi em. Tuy nhiên nếu em có lý do chính đáng thì em viết đơn khiếu nại (nút bên cạnh tên thầy), thầy sẽ xem xét cho em làm bù.', time: formatChatTime(new Date('2025-11-21T16:35:00')) },
+  { id: '12', sender: 'student', name: 'Bạn', message: 'Dạ em bị ốm hôm đó nên không làm được ạ. Em sẽ viết đơn khiếu nại ạ. Em cảm ơn thầy!', time: formatChatTime(new Date('2025-11-21T16:40:00')) },
+  
+  { id: '13', sender: 'tutor', name: 'Thầy Nguyễn Văn A', message: '📢 Thông báo: Tuần sau sẽ có buổi học bù vào thứ 7, các bạn chú ý điểm danh nhé!', time: formatChatTime(new Date('2025-11-22T08:00:00')) },
+  
+  { id: '14', sender: 'student', name: 'Bạn', message: 'Thầy ơi, em không tìm thấy slide bài giảng Chương 4 về Con trỏ ạ.', time: formatChatTime(new Date('2025-11-23T10:15:00')) },
+  { id: '15', sender: 'tutor', name: 'Thầy Nguyễn Văn A', message: 'Chương 4 thầy chưa mở em ạ. Dự kiến tuần sau thầy sẽ upload tài liệu lên. Em tập trung làm tốt Chương 3 trước đã nhé.', time: formatChatTime(new Date('2025-11-23T10:30:00')) },
+  { id: '16', sender: 'student', name: 'Bạn', message: 'Dạ em hiểu rồi ạ. Em cảm ơn thầy!', time: formatChatTime(new Date('2025-11-23T10:32:00')) },
 ];
+
+// Extend Course type to include optional instructor field for backwards compatibility
+type CourseWithInstructor = Course & { instructor?: string };
 
 export function CourseDetailPage({ 
   course,
@@ -238,7 +283,7 @@ export function CourseDetailPage({
   onBack,
   onModuleClick
 }: { 
-  course: Course;
+  course: CourseWithInstructor;
   currentUser: UserInfo;
   onNavigate: (page: 'home' | 'courses' | 'dashboard' | 'grades') => void;
   onLogin: () => void;
@@ -248,6 +293,13 @@ export function CourseDetailPage({
 }) {
   // State cho chat và khiếu nại
   const [chatMessage, setChatMessage] = useState('');
+  const [chatMessages, setChatMessages] = useState<Array<{
+    id: string;
+    sender: 'student' | 'tutor';
+    name: string;
+    message: string;
+    timestamp: Date;
+  }>>([]);
   const [isComplaintDialogOpen, setIsComplaintDialogOpen] = useState(false);
   const [complaintData, setComplaintData] = useState({
     studentId: currentUser.username || '',
@@ -260,6 +312,53 @@ export function CourseDetailPage({
   const [surveyRating, setSurveyRating] = useState<number | null>(null);
   const [surveyFeedback, setSurveyFeedback] = useState('');
   const [surveySubmitted, setSurveySubmitted] = useState(false);
+
+  // Load chat messages from database
+  useEffect(() => {
+    const loadMessages = () => {
+      const dbMessages = mockDatabase.getStudentChatMessages(course.code, currentUser.username || 'student1');
+      const instructorName = course.instructorName || course.instructor || 'Gia sư';
+      setChatMessages(dbMessages.map(msg => ({
+        id: msg.id,
+        sender: msg.sender,
+        name: msg.sender === 'tutor' ? instructorName : 'Bạn',
+        message: msg.message,
+        timestamp: msg.timestamp
+      })));
+    };
+    
+    loadMessages();
+    
+    // Refresh messages every 3 seconds to show new tutor messages
+    const interval = setInterval(loadMessages, 3000);
+    return () => clearInterval(interval);
+  }, [course.code, course.instructorName, course.instructor, currentUser.username]);
+
+  // Send chat message
+  const handleSendMessage = () => {
+    if (!chatMessage.trim()) return;
+    
+    mockDatabase.sendChatMessage(
+      course.code,
+      currentUser.username || 'student1',
+      currentUser.name || 'Sinh viên', // Changed from 'Bạn' to actual student name
+      'student',
+      chatMessage
+    );
+    
+    // Reload messages immediately
+    const dbMessages = mockDatabase.getStudentChatMessages(course.code, currentUser.username || 'student1');
+    const instructorName = course.instructorName || course.instructor || 'Gia sư';
+    setChatMessages(dbMessages.map(msg => ({
+      id: msg.id,
+      sender: msg.sender,
+      name: msg.sender === 'tutor' ? instructorName : 'Bạn',
+      message: msg.message,
+      timestamp: msg.timestamp
+    })));
+    
+    setChatMessage('');
+  };
 
   // Hàm filter modules - chỉ hiển thị module điểm danh nếu có trong database
   // Đồng thời cập nhật trạng thái completed và grade từ database
@@ -457,7 +556,7 @@ export function CourseDetailPage({
       return;
     }
 
-    // Trong thực tế sẽ gọi API: POST /api/complaints
+    // Trong thực tế sẽ g���i API: POST /api/complaints
     console.log('Gửi khiếu nại:', {
       studentId: complaintData.studentId,
       courseId: course.id,
@@ -524,7 +623,7 @@ export function CourseDetailPage({
     });
   };
 
-  // Hàm tính thống kê điểm danh
+  // Hàm tính thống k điểm danh
   const getAttendanceStats = () => {
     const sessionIds = Object.keys(mockAttendanceRecords);
     const total = sessionIds.length;
@@ -576,7 +675,7 @@ export function CourseDetailPage({
                   <Users className="w-5 h-5 text-gray-500" />
                   <div>
                     <p className="text-sm text-gray-500">Giảng viên</p>
-                    <p className="text-gray-900">{course.instructor}</p>
+                    <p className="text-gray-900">{course.instructorName || course.instructor || 'Chưa có thông tin'}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -959,7 +1058,7 @@ export function CourseDetailPage({
                       {/* Chat Messages */}
                       <ScrollArea className="h-[400px] p-4">
                         <div className="space-y-4">
-                          {mockMessages.map((msg) => (
+                          {chatMessages.map((msg) => (
                             <div
                               key={msg.id}
                               className={`flex ${msg.sender === 'student' ? 'justify-end' : 'justify-start'}`}
@@ -970,7 +1069,7 @@ export function CourseDetailPage({
                                 )}
                                 <p>{msg.message}</p>
                                 <p className={`text-xs mt-1 ${msg.sender === 'student' ? 'text-blue-100' : 'text-gray-500'}`}>
-                                  {msg.time}
+                                  {formatChatTime(msg.timestamp)}
                                 </p>
                               </div>
                             </div>
@@ -987,11 +1086,11 @@ export function CourseDetailPage({
                             onChange={(e) => setChatMessage(e.target.value)}
                             onKeyPress={(e) => {
                               if (e.key === 'Enter') {
-                                setChatMessage('');
+                                handleSendMessage();
                               }
                             }}
                           />
-                          <Button size="icon">
+                          <Button size="icon" onClick={handleSendMessage}>
                             <Send className="w-4 h-4" />
                           </Button>
                         </div>

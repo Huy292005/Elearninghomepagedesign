@@ -11,7 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './
 import { UserInfo } from './LoginPage';
 import { Course } from './CoursesPage';
 import { Header } from './Header';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
@@ -256,13 +256,8 @@ const initialStandaloneModules: Module[] = [
 ];
 
 // Mock data - Danh sách sinh viên
-const mockStudents = [
-  { id: 'SV001', name: 'Nguyễn Văn A', lastMessage: '2 giờ trước' },
-  { id: 'SV002', name: 'Trần Thị B', lastMessage: '5 giờ trước' },
-  { id: 'SV003', name: 'Lê Văn C', lastMessage: '1 ngày trước' },
-  { id: 'SV004', name: 'Phạm Thị D', lastMessage: '2 ngày trước' },
-  { id: 'SV005', name: 'Hoàng Văn E', lastMessage: 'Chưa có tin nhắn' },
-];
+// NOTE: Student list is now dynamically loaded from database using getStudentsWithMessages()
+// This ensures that when a new student sends a message, they automatically appear in the tutor's chat list
 
 // Mock data - Điểm số của sinh viên
 const mockStudentGrades = [
@@ -304,10 +299,37 @@ const mockStudentGrades = [
   },
 ];
 
-// Mock data - Chat messages với sinh viên
+// Mock data - Chat messages với sinh viên (Realistic multi-student conversation)
 const mockChatMessages = [
-  { id: '1', sender: 'student', name: 'Nguyễn Văn A', message: 'Thưa thầy, em có thắc mắc về bài tập 2 ạ', time: '14:30' },
-  { id: '2', sender: 'tutor', name: 'Bạn', message: 'Em cứ hỏi thầy nghe', time: '14:35' },
+  // Conversation with Nguyễn Văn A
+  { id: '1', sender: 'student', studentId: 'SV001', name: 'Nguyễn Văn A', message: 'Chào thầy ạ! Em có thắc mắc về bài kiểm tra trắc nghiệm 2 ạ.', time: '09:15 - 20/11/2025' },
+  { id: '2', sender: 'tutor', studentId: 'SV001', name: 'Thầy', message: 'Chào em! Em thắc mắc gì về bài kiểm tra 2 hả em?', time: '09:20 - 20/11/2025' },
+  { id: '3', sender: 'student', studentId: 'SV001', name: 'Nguyễn Văn A', message: 'Em làm được 7.5 điểm nhưng không biết câu nào sai ạ. Em có thể xem lại đáp án được không thầy?', time: '09:22 - 20/11/2025' },
+  { id: '4', sender: 'tutor', studentId: 'SV001', name: 'Thầy', message: 'Em vào phần "Điểm Số" rồi click vào bài kiểm tra đó, sẽ có phần xem đáp án chi tiết và giải thích nhé.', time: '09:25 - 20/11/2025' },
+  { id: '5', sender: 'student', studentId: 'SV001', name: 'Nguyễn Văn A', message: 'Dạ em cảm ơn thầy ạ! Em đã tìm thấy rồi.', time: '09:30 - 20/11/2025' },
+  
+  // Conversation with Trần Thị B
+  { id: '6', sender: 'student', studentId: 'SV002', name: 'Trần Thị B', message: 'Thầy ơi, em có thể xin slide bài giảng Chương 3 lần nữa được không ạ? Em lỡ xóa mất rồi.', time: '13:45 - 21/11/2025' },
+  { id: '7', sender: 'tutor', studentId: 'SV002', name: 'Thầy', message: 'Em vào mục "Nội Dung" ở trang môn học, ấn vào Chương 3, có tất cả tài liệu đó em.', time: '14:00 - 21/11/2025' },
+  { id: '8', sender: 'student', studentId: 'SV002', name: 'Trần Thị B', message: 'Dạ em cảm ơn thầy! Em đã tải được rồi ạ.', time: '14:05 - 21/11/2025' },
+  { id: '9', sender: 'tutor', studentId: 'SV002', name: 'Thầy', message: 'OK em. Lần sau chú ý lưu trữ tài liệu cẩn thận hơn nhé!', time: '14:10 - 21/11/2025' },
+  
+  // Conversation with Lê Văn C (về attendance issue)
+  { id: '10', sender: 'student', studentId: 'SV003', name: 'Lê Văn C', message: 'Thầy cho em hỏi, hôm qua em có đi học nhưng quên điểm danh. Em có thể điểm danh bù được không ạ?', time: '10:20 - 22/11/2025' },
+  { id: '11', sender: 'tutor', studentId: 'SV003', name: 'Thầy', message: 'Em đã đi học đúng giờ chưa em? Thầy cần xác nhận là em có mặt tại lớp.', time: '10:35 - 22/11/2025' },
+  { id: '12', sender: 'student', studentId: 'SV003', name: 'Lê Văn C', message: 'Dạ em đến lớp lúc 8h15, đúng giờ thầy bắt đầu giảng ạ. Bạn em là Phạm Thị D ngồi cạnh em có thể xác nhận ạ.', time: '10:40 - 22/11/2025' },
+  { id: '13', sender: 'tutor', studentId: 'SV003', name: 'Thầy', message: 'OK, thầy sẽ kiểm tra camera lớp học. Nếu đúng thầy sẽ điểm danh bù cho em. Nhưng lần sau em phải chú ý điểm danh đúng giờ nhé.', time: '11:00 - 22/11/2025' },
+  { id: '14', sender: 'student', studentId: 'SV003', name: 'Lê Văn C', message: 'Dạ em cảm ơn thầy rất nhiều ạ! Lần sau em sẽ chú ý hơn.', time: '11:05 - 22/11/2025' },
+  
+  // Conversation with Phạm Thị D (về quiz deadline)
+  { id: '15', sender: 'student', studentId: 'SV004', name: 'Phạm Thị D', message: 'Thầy ơi, deadline bài kiểm tra 3 là ngày nào ạ? Em không tìm thấy thông tin.', time: '16:20 - 22/11/2025' },
+  { id: '16', sender: 'tutor', studentId: 'SV004', name: 'Thầy', message: 'Bài kiểm tra 3 deadline là ngày 08/11 em ạ. Nhưng hiện tại đã quá hạn rồi.', time: '16:30 - 22/11/2025' },
+  { id: '17', sender: 'student', studentId: 'SV004', name: 'Phạm Thị D', message: 'Dạ thầy, em bị ốm hôm đó nên không làm được. Em có thể xin làm bù được không ạ?', time: '16:35 - 22/11/2025' },
+  { id: '18', sender: 'tutor', studentId: 'SV004', name: 'Thầy', message: 'Em có giấy xác nhận của bác sĩ không? Nếu có thì em viết đơn khiếu nại kèm giấy xác nhận, thầy sẽ xem xét cho em làm bù.', time: '16:45 - 22/11/2025' },
+  { id: '19', sender: 'student', studentId: 'SV004', name: 'Phạm Thị D', message: 'Dạ em có giấy xác nhận ạ. Em sẽ gửi đơn khiếu nại ngay. Em cảm ơn thầy!', time: '16:50 - 22/11/2025' },
+  
+  // Recent message from Hoàng Văn E (no prior conversation)
+  { id: '20', sender: 'student', studentId: 'SV005', name: 'Hoàng Văn E', message: 'Thầy ơi, em xin chào thầy ạ!', time: '09:15 - 23/11/2025' },
 ];
 
 // Mock data - Khiếu nại từ sinh viên
@@ -399,11 +421,133 @@ export function TutorCourseDetailPage({
   // State cho chat
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [chatMessage, setChatMessage] = useState('');
+  const [chatMessages, setChatMessages] = useState<Record<string, Array<{
+    id: string;
+    sender: 'student' | 'tutor';
+    name: string;
+    message: string;
+    timestamp: Date;
+  }>>>({});
+  const [studentList, setStudentList] = useState<Array<{
+    id: string;
+    name: string;
+    lastMessage: string;
+    lastMessageTime: Date;
+    unreadCount: number;
+  }>>([]);
 
   // State cho khiếu nại
   const [complaints, setComplaints] = useState<StudentComplaint[]>(initialComplaints);
   const [selectedComplaint, setSelectedComplaint] = useState<StudentComplaint | null>(null);
   const [isComplaintDialogOpen, setIsComplaintDialogOpen] = useState(false);
+
+  // Helper function to format chat time
+  const formatChatTime = (date: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) {
+      return 'Vừa xong';
+    } else if (diffMins < 60) {
+      return `${diffMins} phút trước`;
+    } else if (diffHours < 24) {
+      return `${diffHours} giờ trước`;
+    } else if (diffDays < 7) {
+      return `${diffDays} ngày trước`;
+    } else {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes} - ${day}/${month}/${year}`;
+    }
+  };
+
+  // Load chat messages from database
+  useEffect(() => {
+    const loadAllMessages = () => {
+      // Get all students who have sent messages
+      const studentsWithMessages = mockDatabase.getStudentsWithMessages(course.code);
+      
+      // Load messages for all students
+      const allMessages: Record<string, Array<any>> = {};
+      studentsWithMessages.forEach(student => {
+        const dbMessages = mockDatabase.getStudentChatMessages(course.code, student.studentId);
+        allMessages[student.studentId] = dbMessages.map(msg => ({
+          id: msg.id,
+          sender: msg.sender,
+          name: msg.sender === 'tutor' ? currentUser.name : msg.studentName,
+          message: msg.message,
+          timestamp: msg.timestamp
+        }));
+      });
+      setChatMessages(allMessages);
+
+      // Update student list from database
+      const lastTimes = mockDatabase.getLastMessageTimes(course.code);
+      const unreadCounts = mockDatabase.getUnreadCountForTutor(course.code);
+      const updatedStudents = studentsWithMessages.map(student => ({
+        id: student.studentId,
+        name: student.studentName,
+        lastMessage: lastTimes[student.studentId] ? formatChatTime(lastTimes[student.studentId]) : 'Chưa có tin nhắn',
+        lastMessageTime: lastTimes[student.studentId] || new Date(0), // Add raw timestamp for sorting
+        unreadCount: unreadCounts[student.studentId] || 0 // Add unread count
+      }));
+      
+      // Sort by last message time (most recent first)
+      updatedStudents.sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime());
+      
+      setStudentList(updatedStudents);
+    };
+
+    loadAllMessages();
+
+    // Refresh every 3 seconds
+    const interval = setInterval(loadAllMessages, 3000);
+    return () => clearInterval(interval);
+  }, [course.code]);
+
+  // Mark messages as read when selecting a student
+  useEffect(() => {
+    if (selectedStudentId) {
+      mockDatabase.markMessagesAsRead(course.code, selectedStudentId);
+    }
+  }, [selectedStudentId, course.code]);
+
+  // Send chat message
+  const handleSendMessage = () => {
+    if (!chatMessage.trim() || !selectedStudentId) return;
+
+    const selectedStudent = studentList.find(s => s.id === selectedStudentId);
+    if (!selectedStudent) return;
+
+    mockDatabase.sendChatMessage(
+      course.code,
+      selectedStudentId,
+      selectedStudent.name,
+      'tutor',
+      chatMessage
+    );
+
+    // Reload messages for this student immediately
+    const dbMessages = mockDatabase.getStudentChatMessages(course.code, selectedStudentId);
+    setChatMessages(prev => ({
+      ...prev,
+      [selectedStudentId]: dbMessages.map(msg => ({
+        id: msg.id,
+        sender: msg.sender,
+        name: msg.sender === 'tutor' ? currentUser.name : msg.studentName,
+        message: msg.message,
+        timestamp: msg.timestamp
+      }))
+    }));
+
+    setChatMessage('');
+  };
 
   // Helper functions
   const getModuleIcon = (type: string) => {
@@ -697,7 +841,13 @@ export function TutorCourseDetailPage({
     return labels[category] || category;
   };
 
-  const selectedStudent = mockStudents.find(s => s.id === selectedStudentId);
+  const selectedStudent = studentList.find(s => s.id === selectedStudentId);
+  
+  // Filter chat messages by selected student
+  const getStudentMessages = () => {
+    if (!selectedStudentId) return [];
+    return chatMessages[selectedStudentId] || [];
+  };
 
   // Get survey data for this course
   const courseSurveys = getSurveysByCourse(course.id);
@@ -731,7 +881,7 @@ export function TutorCourseDetailPage({
                 </span>
                 <span className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  {mockStudents.length} sinh viên
+                  {studentList.length} sinh viên
                 </span>
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
@@ -825,20 +975,18 @@ export function TutorCourseDetailPage({
                               <div className="flex items-center justify-between w-full pr-4">
                                 <span className="text-gray-900">{chapter.title}</span>
                                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
+                                  <div
+                                    className="p-2 hover:bg-gray-100 rounded cursor-pointer transition"
                                     onClick={() => handleEditChapter(chapter)}
                                   >
-                                    <Edit className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
+                                    <Edit className="w-4 h-4 text-gray-600" />
+                                  </div>
+                                  <div
+                                    className="p-2 hover:bg-gray-100 rounded cursor-pointer transition"
                                     onClick={() => handleDeleteChapter(chapter.id)}
                                   >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
+                                    <Trash2 className="w-4 h-4 text-gray-600" />
+                                  </div>
                                 </div>
                               </div>
                             </AccordionTrigger>
@@ -962,16 +1110,27 @@ export function TutorCourseDetailPage({
                           <h4 className="text-sm text-gray-900">Sinh viên</h4>
                         </div>
                         <ScrollArea className="h-[550px]">
-                          {mockStudents.map((student) => (
+                          {studentList.map((student) => (
                             <div
                               key={student.id}
                               className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${
                                 selectedStudentId === student.id ? 'bg-blue-50' : ''
-                              }`}
+                              } ${student.unreadCount > 0 ? 'bg-blue-50/30' : ''}`}
                               onClick={() => setSelectedStudentId(student.id)}
                             >
-                              <p className="text-sm text-gray-900">{student.name}</p>
-                              <p className="text-xs text-gray-500">{student.lastMessage}</p>
+                              <div className="flex items-center justify-between mb-1">
+                                <p className={`text-sm ${student.unreadCount > 0 ? 'text-gray-900' : 'text-gray-900'}`}>
+                                  {student.name}
+                                </p>
+                                {student.unreadCount > 0 && (
+                                  <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
+                                    {student.unreadCount}
+                                  </span>
+                                )}
+                              </div>
+                              <p className={`text-xs ${student.unreadCount > 0 ? 'text-gray-700' : 'text-gray-500'}`}>
+                                {student.lastMessage}
+                              </p>
                             </div>
                           ))}
                         </ScrollArea>
@@ -987,9 +1146,9 @@ export function TutorCourseDetailPage({
                             </div>
 
                             {/* Messages */}
-                            <ScrollArea className="flex-1 p-4">
+                            <ScrollArea className="flex-1 p-4 h-[calc(600px-140px)]">
                               <div className="space-y-4">
-                                {mockChatMessages.map((msg) => (
+                                {getStudentMessages().map((msg) => (
                                   <div
                                     key={msg.id}
                                     className={`flex ${
@@ -1003,13 +1162,18 @@ export function TutorCourseDetailPage({
                                           : 'bg-gray-100 text-gray-900'
                                       }`}
                                     >
+                                      <p className={`text-xs mb-1 ${
+                                        msg.sender === 'tutor' ? 'text-blue-100' : 'text-gray-600'
+                                      }`}>
+                                        {msg.name}
+                                      </p>
                                       <p className="text-sm mb-1">{msg.message}</p>
                                       <p
                                         className={`text-xs ${
                                           msg.sender === 'tutor' ? 'text-blue-100' : 'text-gray-500'
                                         }`}
                                       >
-                                        {msg.time}
+                                        {formatChatTime(msg.timestamp)}
                                       </p>
                                     </div>
                                   </div>
@@ -1026,12 +1190,11 @@ export function TutorCourseDetailPage({
                                   onChange={(e) => setChatMessage(e.target.value)}
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter' && chatMessage.trim()) {
-                                      console.log('Send message:', chatMessage);
-                                      setChatMessage('');
+                                      handleSendMessage();
                                     }
                                   }}
                                 />
-                                <Button size="icon">
+                                <Button size="icon" onClick={handleSendMessage}>
                                   <Send className="w-4 h-4" />
                                 </Button>
                               </div>
@@ -1257,7 +1420,7 @@ export function TutorCourseDetailPage({
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Sinh viên</span>
-                      <span className="text-gray-900">{mockStudents.length}</span>
+                      <span className="text-gray-900">{studentList.length}</span>
                     </div>
                   </div>
                 </div>
@@ -1300,7 +1463,7 @@ export function TutorCourseDetailPage({
             </DialogTitle>
             <DialogDescription>
               {editMode === 'chapter' 
-                ? 'Nhập thông tin chương mới' 
+                ? 'Nhập thông tin chư��ng mới' 
                 : 'Nhập thông tin cơ bản cho module (bạn có thể tùy chỉnh chi tiết sau)'}
             </DialogDescription>
           </DialogHeader>

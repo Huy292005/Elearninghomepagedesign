@@ -25,7 +25,7 @@ function ClassSlot({ slot }: { slot: ScheduleSlot | undefined }) {
       <div className="space-y-1">
         <div>
           <Badge variant="outline" className="text-xs mb-1">
-            {slot.courseCode}
+            {slot.courseCode}{slot.section ? `-${slot.section}` : ''}
           </Badge>
         </div>
         <h4 className="text-sm line-clamp-2">
@@ -57,7 +57,7 @@ export function SchedulePage({
 }) {
   // Lọc lịch học theo role của người dùng
   const filteredSchedule = currentUser 
-    ? getScheduleByRole(currentUser.role, currentUser.name)
+    ? getScheduleByRole(currentUser.role, currentUser.username)
     : mockSchedule;
 
   return (

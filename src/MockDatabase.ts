@@ -1,67 +1,3 @@
-// Mock Database for E-Learning System
-// This simulates a backend database with persistent state
-
-export interface QuizMetadata {
-  id: string;
-  courseCode: string;
-  chapterId: string;
-  title: string;
-  startTime: Date;
-  deadline: Date;
-  duration: number; // minutes
-  allowLateSubmit: boolean;
-  maxAttempts: number;
-  passingScore: number; // percentage
-}
-
-export interface QuizQuestion {
-  id: string;
-  questionNumber: number;
-  question: string;
-  options: string[];
-  correctAnswer: number; // Index of correct answer (0-3)
-  points: number;
-  explanation?: string; // Optional explanation for correct answer
-}
-
-export interface Quiz {
-  metadata: QuizMetadata;
-  questions: QuizQuestion[];
-}
-
-export interface QuizAttempt {
-  attemptId: string;
-  userId: string;
-  quizId: string;
-  startTime: Date;
-  endTime?: Date;
-  answers: Record<string, number>; // questionId -> answerIndex
-  status: 'in-progress' | 'submitted' | 'auto-submitted';
-  timeTaken?: number; // seconds
-}
-
-export interface QuizResult {
-  resultId: string;
-  userId: string;
-  quizId: string;
-  attemptId: string;
-  score: number; // percentage (0-100)
-  earnedPoints: number;
-  totalPoints: number;
-  correctAnswers: number;
-  totalQuestions: number;
-  submittedAt: Date;
-  timeTaken: number; // seconds
-  passed: boolean;
-  answers: Record<string, {
-    selected: number | undefined;
-    correct: number;
-    isCorrect: boolean;
-    points: number;
-    earnedPoints: number;
-  }>;
-}
-
 // Mock Database Object
 class MockDatabaseClass {
   // Quiz definitions
@@ -72,9 +8,13 @@ class MockDatabaseClass {
   
   // Quiz results
   quizResults: Record<string, Record<string, QuizResult[]>> = {}; // userId -> quizId -> results[]
+  
+  // Chat messages: courseId -> messages[]
+  chatMessages: Record<string, ChatMessage[]> = {};
 
   constructor() {
     this.initializeMockData();
+    this.loadChatMessagesFromStorage();
   }
 
   private initializeMockData() {
@@ -275,6 +215,288 @@ class MockDatabaseClass {
     };
 
     this.quizzes.push(mathQuiz);
+  }
+
+  private loadChatMessagesFromStorage() {
+    // Load chat messages from local storage if available
+    const storedMessages = localStorage.getItem('chatMessages');
+    if (storedMessages) {
+      const parsed = JSON.parse(storedMessages);
+      // Convert timestamp strings back to Date objects
+      for (const courseId in parsed) {
+        if (parsed[courseId]) {
+          parsed[courseId] = parsed[courseId].map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }));
+        }
+      }
+      this.chatMessages = parsed;
+    } else {
+      // Initialize with sample data if localStorage is empty
+      this.initializeSampleChatMessages();
+      this.saveChatMessagesToStorage();
+    }
+  }
+
+  private initializeSampleChatMessages() {
+    // Sample chat messages for CS101
+    const cs101Messages: ChatMessage[] = [
+      {
+        id: 'msg1',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'tutor',
+        message: 'Chào các bạn! Chúc các bạn một ngày học tập hiệu quả. Hôm nay chúng ta sẽ bắt đầu chương mới về Con trỏ trong C.',
+        timestamp: new Date(2025, 10, 20, 8, 0, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg2',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'tutor',
+        message: 'Các bạn nhớ xem video bài giảng và đọc tài liệu trước khi đến lớp nhé. Nếu có thắc mắc gì, inbox cho thầy ở đây.',
+        timestamp: new Date(2025, 10, 20, 8, 2, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg3',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'student',
+        message: 'Thưa thầy, em có thắc mắc về bài kiểm tra trắc nghiệm 2 ạ. Em làm được 7.5 điểm nhưng không biết câu nào sai ạ.',
+        timestamp: new Date(2025, 10, 20, 9, 15, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg4',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'tutor',
+        message: 'Chào em! Em vào phần "Điểm Số" rồi click vào bài kiểm tra đó, sẽ có phần xem đáp án chi tiết và giải thích nhé.',
+        timestamp: new Date(2025, 10, 20, 9, 20, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg5',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'student',
+        message: 'Dạ em cảm ơn thầy ạ!',
+        timestamp: new Date(2025, 10, 20, 9, 22, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg6',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'student',
+        message: 'Thầy ơi, em xin phép hỏi về bài tập vòng lặp ạ. Em chưa hiểu rõ sự khác nhau giữa vòng for và while ạ.',
+        timestamp: new Date(2025, 10, 20, 14, 30, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg7',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'tutor',
+        message: 'Vòng lặp for thường dùng khi em biết trước số lần lặp, ví dụ: for(i=0; i<10; i++). Còn while dùng khi điều kiện dừng phụ thuộc vào logic, ví dụ: while(n>0).',
+        timestamp: new Date(2025, 10, 20, 14, 45, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg8',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'tutor',
+        message: 'Em có thể xem lại video "Vòng lặp for và while" ở Chương 3. Thầy có giải thích rất kỹ ở phút thứ 12 đó em.',
+        timestamp: new Date(2025, 10, 20, 14, 46, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg9',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'student',
+        message: 'Dạ em hiểu rồi ạ! Em cảm ơn thầy nhiều ạ.',
+        timestamp: new Date(2025, 10, 20, 15, 0, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg10',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'student',
+        message: 'Thầy cho em hỏi, deadline bài kiểm tra 3 là ngày 08/11 nhưng hôm nay là 23/11 rồi, em có thể làm bù được không ạ?',
+        timestamp: new Date(2025, 10, 21, 16, 20, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg11',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'tutor',
+        message: 'Bài kiểm tra 3 đã quá hạn rồi em. Tuy nhiên nếu em có lý do chính đáng thì em viết đơn khiếu nại (nút bên cạnh tên thầy), thầy sẽ xem xét cho em làm bù.',
+        timestamp: new Date(2025, 10, 21, 16, 35, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg12',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'student',
+        message: 'Dạ em bị ốm hôm đó nên không làm được ạ. Em sẽ viết đơn khiếu nại ạ. Em cảm ơn thầy!',
+        timestamp: new Date(2025, 10, 21, 16, 40, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg13',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'tutor',
+        message: '📢 Thông báo: Tuần sau sẽ có buổi học bù vào thứ 7, các bạn chú ý điểm danh nhé!',
+        timestamp: new Date(2025, 10, 22, 8, 0, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg14',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'student',
+        message: 'Thầy ơi, em không tìm thấy slide bài giảng Chương 4 về Con trỏ ạ.',
+        timestamp: new Date(2025, 10, 23, 10, 15, 0),
+        isRead: false,
+      },
+      {
+        id: 'msg15',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'tutor',
+        message: 'Chương 4 thầy chưa mở em ạ. Dự kiến tuần sau thầy sẽ upload tài liệu lên. Em tập trung làm tốt Chương 3 trước đã nhé.',
+        timestamp: new Date(2025, 10, 23, 10, 30, 0),
+        isRead: false,
+      },
+      {
+        id: 'msg16',
+        courseId: 'CS101',
+        studentId: 'SV001',
+        studentName: 'Nguyễn Văn A',
+        sender: 'student',
+        message: 'Dạ em hiểu rồi ạ. Em cảm ơn thầy!',
+        timestamp: new Date(2025, 10, 23, 10, 32, 0),
+        isRead: false,
+      },
+    ];
+
+    // Messages from student2 (SV002 - Trần Thị B)
+    const student2Messages: ChatMessage[] = [
+      {
+        id: 'msg-s2-1',
+        courseId: 'CS101',
+        studentId: 'SV002',
+        studentName: 'Trần Thị B',
+        sender: 'student',
+        message: 'Thầy ơi, em muốn hỏi về bài kiểm tra 1 ạ. Em được 8.5 điểm nhưng thắc mắc câu 7.',
+        timestamp: new Date(2025, 10, 21, 10, 30, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg-s2-2',
+        courseId: 'CS101',
+        studentId: 'SV002',
+        studentName: 'Trần Thị B',
+        sender: 'tutor',
+        message: 'Chào Trần Thị B! Câu 7 hỏi về pointer arithmetic. Em có thể xem lại giải thích trong phần kết quả bài kiểm tra nhé.',
+        timestamp: new Date(2025, 10, 21, 11, 0, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg-s2-3',
+        courseId: 'CS101',
+        studentId: 'SV002',
+        studentName: 'Trần Thị B',
+        sender: 'student',
+        message: 'Dạ em cảm ơn thầy ạ!',
+        timestamp: new Date(2025, 10, 21, 11, 15, 0),
+        isRead: true,
+      },
+    ];
+
+    // Messages from student3 (SV003 - Lê Văn C)
+    const student3Messages: ChatMessage[] = [
+      {
+        id: 'msg-s3-1',
+        courseId: 'CS101',
+        studentId: 'SV003',
+        studentName: 'Lê Văn C',
+        sender: 'student',
+        message: 'Thầy cho em hỏi về bài tập nộp file ạ. Em nộp rồi nhưng không thấy kết quả.',
+        timestamp: new Date(2025, 10, 22, 14, 20, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg-s3-2',
+        courseId: 'CS101',
+        studentId: 'SV003',
+        studentName: 'Lê Văn C',
+        sender: 'tutor',
+        message: 'Thầy đã nhận được bài của em. Thầy sẽ chấm và trả kết quả trong tuần này.',
+        timestamp: new Date(2025, 10, 22, 15, 0, 0),
+        isRead: true,
+      },
+    ];
+
+    // Messages from student4 (SV004 - Phạm Thị D)
+    const student4Messages: ChatMessage[] = [
+      {
+        id: 'msg-s4-1',
+        courseId: 'CS101',
+        studentId: 'SV004',
+        studentName: 'Phạm Thị D',
+        sender: 'student',
+        message: 'Thầy ơi, em bị ốm nên vắng buổi học tuần trước. Em có thể xin tài liệu được không ạ?',
+        timestamp: new Date(2025, 10, 21, 16, 0, 0),
+        isRead: true,
+      },
+      {
+        id: 'msg-s4-2',
+        courseId: 'CS101',
+        studentId: 'SV004',
+        studentName: 'Phạm Thị D',
+        sender: 'tutor',
+        message: 'Chào em! Tài liệu buổi học đã được upload lên hệ thống rồi. Em vào mục "Nội dung" để tải về nhé.',
+        timestamp: new Date(2025, 10, 21, 17, 30, 0),
+        isRead: true,
+      },
+    ];
+
+    this.chatMessages['CS101'] = [
+      ...cs101Messages,
+      ...student2Messages,
+      ...student3Messages,
+      ...student4Messages,
+    ];
+  }
+
+  private saveChatMessagesToStorage() {
+    // Save chat messages to local storage
+    localStorage.setItem('chatMessages', JSON.stringify(this.chatMessages));
   }
 
   // Get quiz by ID
@@ -522,6 +744,122 @@ class MockDatabaseClass {
     }
 
     return allResults;
+  }
+
+  // ============================================
+  // CHAT SYSTEM METHODS
+  // ============================================
+
+  // Get all messages for a course
+  getChatMessages(courseId: string): ChatMessage[] {
+    if (!this.chatMessages[courseId]) {
+      this.chatMessages[courseId] = [];
+    }
+    return this.chatMessages[courseId].sort((a, b) => 
+      a.timestamp.getTime() - b.timestamp.getTime()
+    );
+  }
+
+  // Get messages for a specific student in a course (for tutor view)
+  getStudentChatMessages(courseId: string, studentId: string): ChatMessage[] {
+    return this.getChatMessages(courseId).filter(msg => msg.studentId === studentId);
+  }
+
+  // Send a new chat message
+  sendChatMessage(
+    courseId: string,
+    studentId: string,
+    studentName: string,
+    sender: 'student' | 'tutor',
+    message: string
+  ): ChatMessage {
+    if (!this.chatMessages[courseId]) {
+      this.chatMessages[courseId] = [];
+    }
+
+    const newMessage: ChatMessage = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      courseId,
+      studentId,
+      studentName,
+      sender,
+      message,
+      timestamp: new Date(),
+      isRead: false,
+    };
+
+    this.chatMessages[courseId].push(newMessage);
+    this.saveChatMessagesToStorage();
+    return newMessage;
+  }
+
+  // Mark messages as read
+  markMessagesAsRead(courseId: string, studentId?: string): void {
+    if (!this.chatMessages[courseId]) return;
+
+    this.chatMessages[courseId].forEach(msg => {
+      if (!studentId || msg.studentId === studentId) {
+        msg.isRead = true;
+      }
+    });
+    this.saveChatMessagesToStorage();
+  }
+
+  // Get unread message count for a course (for student - count tutor messages)
+  getUnreadCountForStudent(courseId: string, studentId: string): number {
+    if (!this.chatMessages[courseId]) return 0;
+    
+    return this.chatMessages[courseId].filter(
+      msg => msg.studentId === studentId && msg.sender === 'tutor' && !msg.isRead
+    ).length;
+  }
+
+  // Get unread message count per student (for tutor - count student messages)
+  getUnreadCountForTutor(courseId: string): Record<string, number> {
+    if (!this.chatMessages[courseId]) return {};
+
+    const counts: Record<string, number> = {};
+    
+    this.chatMessages[courseId]
+      .filter(msg => msg.sender === 'student' && !msg.isRead)
+      .forEach(msg => {
+        counts[msg.studentId] = (counts[msg.studentId] || 0) + 1;
+      });
+
+    return counts;
+  }
+
+  // Get last message time for each student (for tutor view)
+  getLastMessageTimes(courseId: string): Record<string, Date> {
+    if (!this.chatMessages[courseId]) return {};
+
+    const lastTimes: Record<string, Date> = {};
+    
+    this.chatMessages[courseId].forEach(msg => {
+      if (!lastTimes[msg.studentId] || msg.timestamp > lastTimes[msg.studentId]) {
+        lastTimes[msg.studentId] = msg.timestamp;
+      }
+    });
+
+    return lastTimes;
+  }
+
+  // Get all unique students who have messages in a course (for tutor view)
+  getStudentsWithMessages(courseId: string): Array<{ studentId: string; studentName: string }> {
+    if (!this.chatMessages[courseId]) return [];
+
+    const studentMap = new Map<string, string>();
+    
+    this.chatMessages[courseId].forEach(msg => {
+      if (!studentMap.has(msg.studentId)) {
+        studentMap.set(msg.studentId, msg.studentName);
+      }
+    });
+
+    return Array.from(studentMap.entries()).map(([studentId, studentName]) => ({
+      studentId,
+      studentName
+    }));
   }
 }
 
